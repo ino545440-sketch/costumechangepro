@@ -1,7 +1,18 @@
 import { GoogleGenAI, Type, GenerateContentResponse } from "@google/genai";
-import { AspectRatio } from '../types';
+import { AspectRatio, ModelTier } from '../types';
 
 // NOTE: We now require the API Key to be passed in, supporting both Env vars (dev) and User Input (web).
+
+const MODEL_CONFIG = {
+  pro: {
+    analysis: "gemini-1.5-pro",
+    verification: "gemini-1.5-pro"
+  },
+  flash: {
+    analysis: "gemini-1.5-flash",
+    verification: "gemini-1.5-flash"
+  }
+};
 
 /**
  * Helper function to retry operations with exponential backoff.
@@ -49,7 +60,8 @@ async function retryWithBackoff<T>(
 export const analyzeAndCreatePrompt = async (
   apiKey: string,
   imageBase64: string,
-  targetOutfit: string
+  targetOutfit: string,
+  modelTier: ModelTier = 'pro'
 ): Promise<{ yaml: string; prompt: string }> => {
 
   const ai = new GoogleGenAI({ apiKey });
@@ -117,7 +129,7 @@ export const analyzeAndCreatePrompt = async (
 
   try {
     const response = await retryWithBackoff<GenerateContentResponse>(() => ai.models.generateContent({
-      model: "gemini-3-pro-preview",
+      model: MODEL_CONFIG[modelTier].analysis,
       contents: {
         parts: [
           { inlineData: { mimeType: "image/jpeg", data: imageBase64 } },
@@ -162,7 +174,8 @@ export const analyzeAndCreatePrompt = async (
  */
 export const analyzeReferenceOutfit = async (
   apiKey: string,
-  refImageBase64: string
+  refImageBase64: string,
+  modelTier: ModelTier = 'pro'
 ): Promise<string> => {
   const ai = new GoogleGenAI({ apiKey });
 
@@ -180,7 +193,7 @@ export const analyzeReferenceOutfit = async (
 
   try {
     const response = await retryWithBackoff<GenerateContentResponse>(() => ai.models.generateContent({
-      model: "gemini-3-pro-preview",
+      model: MODEL_CONFIG[modelTier].analysis,
       contents: {
         parts: [
           { inlineData: { mimeType: "image/jpeg", data: refImageBase64 } },
@@ -216,7 +229,8 @@ export const analyzeReferenceOutfit = async (
  */
 export const analyzeAndCreateExtractionPrompt = async (
   apiKey: string,
-  imageBase64: string
+  imageBase64: string,
+  modelTier: ModelTier = 'pro'
 ): Promise<{ yaml: string; prompt: string }> => {
 
   const ai = new GoogleGenAI({ apiKey });
@@ -258,7 +272,7 @@ export const analyzeAndCreateExtractionPrompt = async (
 
   try {
     const response = await retryWithBackoff<GenerateContentResponse>(() => ai.models.generateContent({
-      model: "gemini-3-pro-preview",
+      model: MODEL_CONFIG[modelTier].analysis,
       contents: {
         parts: [
           { inlineData: { mimeType: "image/jpeg", data: imageBase64 } },
@@ -359,7 +373,8 @@ export const generateOutfitImage = async (
 export const verifyOutfitMatch = async (
   apiKey: string,
   generatedImageBase64: string,
-  targetDescription: string
+  targetDescription: string,
+  modelTier: ModelTier = 'pro'
 ): Promise<{ match: boolean; reason: string }> => {
   // Use a faster, multimodal capable model for verification
   const ai = new GoogleGenAI({ apiKey });
@@ -382,7 +397,7 @@ export const verifyOutfitMatch = async (
 
   try {
     const response = await retryWithBackoff<GenerateContentResponse>(() => ai.models.generateContent({
-      model: "gemini-2.5-flash",
+      model: MODEL_CONFIG[modelTier].verification,
       contents: {
         parts: [
           { inlineData: { mimeType: "image/png", data: generatedImageBase64 } }, // generatedImage is usually PNG

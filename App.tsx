@@ -5,7 +5,7 @@ import ApiKeyChecker from './components/ApiKeyChecker';
 import LoginScreen from './components/LoginScreen';
 import { fileToBase64, getImageDimensions, getDisplayUrl } from './utils';
 import { analyzeAndCreatePrompt, generateOutfitImage, analyzeAndCreateExtractionPrompt, analyzeReferenceOutfit, verifyOutfitMatch } from './services/gemini';
-import { AppState, AspectRatio } from './types';
+import { AppState, AspectRatio, ModelTier } from './types';
 import { subscribeToAuthChanges, logOut } from './services/firebase';
 import { User } from 'firebase/auth';
 
@@ -23,6 +23,7 @@ const App: React.FC = () => {
   const [sourceImage, setSourceImage] = useState<File | null>(null);
   const [sourceImageUrl, setSourceImageUrl] = useState<string | null>(null);
   const [aspectRatio, setAspectRatio] = useState<AspectRatio>('1:1');
+  const [modelTier, setModelTier] = useState<ModelTier>('pro');
 
   // Outfit State
   const [outfitMode, setOutfitMode] = useState<'text' | 'image'>('text');
@@ -104,7 +105,7 @@ const App: React.FC = () => {
         const refBase64 = await fileToBase64(refOutfitImage);
 
         // Analyze reference image to get keywords
-        finalTargetOutfit = await analyzeReferenceOutfit(apiKey, refBase64);
+        finalTargetOutfit = await analyzeReferenceOutfit(apiKey, refBase64, modelTier);
 
         // Validation: Check if we got valid data
         if (!finalTargetOutfit || finalTargetOutfit.trim() === '') {
@@ -115,7 +116,7 @@ const App: React.FC = () => {
       }
 
       // Step 1: Analyze Character and Create Prompt
-      const { yaml, prompt } = await analyzeAndCreatePrompt(apiKey, sourceBase64, finalTargetOutfit);
+      const { yaml, prompt } = await analyzeAndCreatePrompt(apiKey, sourceBase64, finalTargetOutfit, modelTier);
 
       // Store the prompt for retry
       setLastPrompt(prompt);
@@ -133,7 +134,7 @@ const App: React.FC = () => {
       // Step 3: Verify Result (Async)
       // Extract pure Base64 for verification
       const base64Data = imageUrl.split(',')[1];
-      verifyOutfitMatch(apiKey, base64Data, finalTargetOutfit).then(result => {
+      verifyOutfitMatch(apiKey, base64Data, finalTargetOutfit, modelTier).then(result => {
         if (!result.match) {
           setWarningMessage(`生成された画像が指定された服装と異なる可能性があります。\n理由: ${result.reason}`);
         }
@@ -161,7 +162,7 @@ const App: React.FC = () => {
       const base64 = await fileToBase64(sourceImage);
 
       // Step 1: Analyze and Create Prompt for Extraction
-      const { yaml, prompt } = await analyzeAndCreateExtractionPrompt(apiKey, base64);
+      const { yaml, prompt } = await analyzeAndCreateExtractionPrompt(apiKey, base64, modelTier);
 
       // Store the prompt for retry
       setLastPrompt(prompt);
@@ -273,6 +274,16 @@ const App: React.FC = () => {
           </div>
 
           <div className="flex items-center gap-4">
+            {/* Model Selector */}
+            <select
+              value={modelTier}
+              onChange={(e) => setModelTier(e.target.value as ModelTier)}
+              className="bg-slate-800 text-slate-300 text-xs rounded-lg px-2 py-1.5 border border-slate-700 focus:outline-none focus:border-purple-500 hidden sm:block"
+            >
+              <option value="pro">Pro (High Quality)</option>
+              <option value="flash">Flash (Fast/Free)</option>
+            </select>
+
             {/* User Profile / Logout */}
             <div className="flex items-center gap-3 bg-slate-800/50 px-3 py-1.5 rounded-full border border-slate-700">
               {user.photoURL ? (

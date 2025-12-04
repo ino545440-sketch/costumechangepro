@@ -12,9 +12,12 @@ export interface GenerationResult {
   generatedImageUrl: string | null;
 }
 
-export type AppState = 
-  | 'idle' 
-  | 'analyzing' 
-  | 'generating' 
-  | 'complete' 
+export type AppState =
+  | 'idle'
+  | 'analyzing'
+  | 'generating'
+  | 'complete'
+  | 'complete'
   | 'error';
+
+export type ModelTier = 'pro' | 'flash';
