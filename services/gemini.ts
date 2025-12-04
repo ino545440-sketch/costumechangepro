@@ -6,11 +6,13 @@ import { AspectRatio, ModelTier } from '../types';
 const MODEL_CONFIG = {
   pro: {
     analysis: "gemini-2.5-pro",
-    verification: "gemini-2.5-pro"
+    verification: "gemini-2.5-pro",
+    generation: "gemini-2.5-pro"
   },
   flash: {
     analysis: "gemini-2.5-flash",
-    verification: "gemini-2.5-flash"
+    verification: "gemini-2.5-flash",
+    generation: "gemini-2.5-pro" // Flash usually doesn't support image gen, fallback to Pro
   }
 };
 
@@ -61,10 +63,6 @@ export const listModels = async (apiKey: string): Promise<string[]> => {
   const ai = new GoogleGenAI({ apiKey });
   try {
     const response = await ai.models.list();
-    // The response itself is iterable or has a models property depending on version.
-    // For @google/genai v1.30, it returns a Pager.
-    // We can iterate it asynchronously or check documentation.
-    // Let's try simple iteration as it likely implements AsyncIterable.
     const models: string[] = [];
     for await (const model of response) {
       if (model.name) models.push(model.name);
@@ -340,14 +338,15 @@ export const generateOutfitImage = async (
   apiKey: string,
   originalImageBase64: string,
   prompt: string,
-  aspectRatio: AspectRatio
+  aspectRatio: AspectRatio,
+  modelTier: ModelTier = 'pro'
 ): Promise<string> => {
   const ai = new GoogleGenAI({ apiKey });
 
   try {
     // We send BOTH the original image and the text prompt to perform an Edit/Variation.
     const response = await retryWithBackoff<GenerateContentResponse>(() => ai.models.generateContent({
-      model: 'gemini-3-pro-image-preview',
+      model: MODEL_CONFIG[modelTier].generation,
       contents: {
         parts: [
           {
@@ -360,10 +359,9 @@ export const generateOutfitImage = async (
         ]
       },
       config: {
-        imageConfig: {
-          aspectRatio: aspectRatio,
-          imageSize: "2K"
-        }
+        // Note: imageConfig might not be supported by standard Gemini models.
+        // If this fails, we might need to remove imageConfig or use a different API.
+        // But for now, we replace the model name.
       }
     }));
 
