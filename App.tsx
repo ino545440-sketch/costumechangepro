@@ -260,7 +260,7 @@ const App: React.FC = () => {
 
   return (
     <div className="min-h-screen flex flex-col bg-slate-950 text-slate-200">
-      <ApiKeyChecker onReady={setApiKey} />
+      {!apiKey && <ApiKeyChecker onReady={setApiKey} />}
 
       {/* Header */}
       <header className="border-b border-slate-800 bg-slate-900/50 backdrop-blur-md sticky top-0 z-30">
