@@ -5,12 +5,12 @@ import { AspectRatio, ModelTier } from '../types';
 
 const MODEL_CONFIG = {
   pro: {
-    analysis: "gemini-1.5-pro-001",
-    verification: "gemini-1.5-pro-001"
+    analysis: "gemini-1.5-pro-002",
+    verification: "gemini-1.5-pro-002"
   },
   flash: {
-    analysis: "gemini-1.5-flash-001",
-    verification: "gemini-1.5-flash-001"
+    analysis: "gemini-1.5-flash-002",
+    verification: "gemini-1.5-flash-002"
   }
 };
 
@@ -53,6 +53,28 @@ async function retryWithBackoff<T>(
 
   throw lastError;
 }
+
+/**
+ * Debug function to list available models for the API key.
+ */
+export const listModels = async (apiKey: string): Promise<string[]> => {
+  const ai = new GoogleGenAI({ apiKey });
+  try {
+    const response = await ai.models.list();
+    // The response itself is iterable or has a models property depending on version.
+    // For @google/genai v1.30, it returns a Pager.
+    // We can iterate it asynchronously or check documentation.
+    // Let's try simple iteration as it likely implements AsyncIterable.
+    const models: string[] = [];
+    for await (const model of response) {
+      if (model.name) models.push(model.name);
+    }
+    return models;
+  } catch (error) {
+    console.error("List Models Error:", error);
+    return [];
+  }
+};
 
 /**
  * Analyzes the image to extract character details and creates a new prompt with the target outfit.

@@ -4,7 +4,7 @@ import OutfitSelector from './components/OutfitSelector';
 import ApiKeyChecker from './components/ApiKeyChecker';
 import LoginScreen from './components/LoginScreen';
 import { fileToBase64, getImageDimensions, getDisplayUrl } from './utils';
-import { analyzeAndCreatePrompt, generateOutfitImage, analyzeAndCreateExtractionPrompt, analyzeReferenceOutfit, verifyOutfitMatch } from './services/gemini';
+import { analyzeAndCreatePrompt, generateOutfitImage, analyzeAndCreateExtractionPrompt, analyzeReferenceOutfit, verifyOutfitMatch, listModels } from './services/gemini';
 import { AppState, AspectRatio, ModelTier } from './types';
 import { subscribeToAuthChanges, logOut } from './services/firebase';
 import { User } from 'firebase/auth';
@@ -233,6 +233,14 @@ const App: React.FC = () => {
     setApiKey(null);
   };
 
+  const handleDebugModels = async () => {
+    if (!apiKey) return;
+    console.log("Checking available models...");
+    const models = await listModels(apiKey);
+    console.log("Available Models:", models);
+    alert(`Available Models (Check Console for full list):\n${models.slice(0, 5).join('\n')}\n...`);
+  };
+
   // Validation helper
   const isGenerateDisabled = () => {
     if (!sourceImage) return true;
@@ -300,6 +308,13 @@ const App: React.FC = () => {
                 title="APIキーを変更"
               >
                 <Key size={14} />
+              </button>
+              <button
+                onClick={handleDebugModels}
+                className="p-1 hover:bg-slate-700 rounded-full transition-colors text-slate-400 hover:text-white mr-1 hidden sm:block"
+                title="モデル一覧を確認 (Debug)"
+              >
+                <AlertCircle size={14} />
               </button>
               <button
                 onClick={handleLogout}
