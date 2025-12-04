@@ -5,12 +5,12 @@ import { AspectRatio, ModelTier } from '../types';
 
 const MODEL_CONFIG = {
   pro: {
-    analysis: "gemini-1.5-pro-002",
-    verification: "gemini-1.5-pro-002"
+    analysis: "gemini-2.5-pro",
+    verification: "gemini-2.5-pro"
   },
   flash: {
-    analysis: "gemini-1.5-flash-002",
-    verification: "gemini-1.5-flash-002"
+    analysis: "gemini-2.5-flash",
+    verification: "gemini-2.5-flash"
   }
 };
 
