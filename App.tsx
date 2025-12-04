@@ -284,6 +284,13 @@ const App: React.FC = () => {
               )}
               <span className="text-xs font-medium text-slate-300 hidden sm:block">{user.displayName || user.email}</span>
               <button
+                onClick={handleChangeKey}
+                className="p-1 hover:bg-slate-700 rounded-full transition-colors text-slate-400 hover:text-white mr-1"
+                title="APIキーを変更"
+              >
+                <Key size={14} />
+              </button>
+              <button
                 onClick={handleLogout}
                 className="p-1 hover:bg-slate-700 rounded-full transition-colors text-slate-400 hover:text-white"
                 title="ログアウト"
